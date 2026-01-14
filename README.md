@@ -1,63 +1,19 @@
-# Novelist - AI小说家
+# Novel Workflow (LangGraph) — README
 
-一个基于LangChain的AI小说生成项目，支持OpenAI和DeepSeek API。
+这是一个用 **LangGraph + LangChain(OpenAI)** 搭建的“卷级/章级”小说生成原型脚本。  
+当前版本以 **一个 Python 文件**为主（你现在正在运行的那个脚本），支持从设定出发生成：大纲 →（可选）结构 → 章节正文 → 输出到文件。
 
-## 项目结构
+> 目标：快速验证“分阶段生成 + 可迭代”的写作工作流，而不是一次性把整本书塞进 prompt。
 
-```
-Novelist/
-├── src/                    # 源代码目录
-│   ├── prompts/           # 提示词模板
-│   │   ├── __init__.py
-│   │   ├── prompt_loader.py  # 提示词加载器
-│   │   ├── zh/            # 中文提示词
-│   │   │   ├── __init__.py
-│   │   │   └── prompts.py
-│   │   ├── en/            # 英文提示词
-│   │   │   ├── __init__.py
-│   │   │   └── prompts.py
-│   │   └── ja/            # 日文提示词
-│   │       ├── __init__.py
-│   │       └── prompts.py
-│   ├── utils/             # 工具类
-│   │   ├── __init__.py
-│   │   ├── config.py      # 配置管理
-│   │   └── file_utils.py  # 文件操作工具
-│   ├── core/              # 核心代码
-│   │   ├── __init__.py
-│   │   └── novel_generator.py  # 小说生成器
-│   └── main.py            # 主程序入口
-├── input/                 # 输入目录
-│   └── input.txt          # 输入文件（小说需求）
-├── intermediate/          # 中间结果目录
-│   └── 剧情大纲.txt       # AI生成的剧情大纲
-├── output/                # 输出目录
-│   └── 小说正文.txt       # 生成的小说正文
-├── requirements.txt       # Python依赖
-├── env.example            # 环境变量示例
-└── README.md
-```
 
-## 安装步骤
+## 功能概览
 
-1. 安装依赖：
-```bash
-pip install -r requirements.txt
-```
-
-2. 配置环境变量：
-   - 复制 `env.example` 为 `.env`
-   - 在 `.env` 文件中配置：
-     ```
-     # 语言配置（可选，默认为zh）
-     # 支持的语言: zh (中文), en (English), ja (日本語)
-     LANGUAGE=zh
-     
-     # 方式1：使用OpenAI
-     OPENAI_API_KEY=your_openai_api_key_here
-     
-     # 方式2：使用DeepSeek（优先使用OpenAI，如果没有则使用DeepSeek）
-     DEEPSEEK_API_KEY=your_deepseek_api_key_here
+- 输入一段故事设定（`user_input`），可选输入你自己的大纲（`user_outline`）
+- 通过 LangGraph 串联多个节点（nodes）进行生成
+- 输出：
+  - 结构化大纲对象（OutlineSummary / 或你的对应模型）
+  - 章节正文（chapters 列表）
+  - 落盘文件（例如 `outputs/novel_v3.txt`）
      ```
 
 ## 使用方法
@@ -69,45 +25,16 @@ pip install -r requirements.txt
 
 2. 运行主程序：
 ```bash
-python src/main.py
+python main_0.py
 ```
+## 依赖与环境
 
-3. 生成完成后：
-   - 剧情大纲会保存在 `intermediate/` 目录（文件名根据语言不同）
-   - 小说正文会保存在 `output/` 目录（文件名根据语言不同）
+### Python 版本
+建议 Python 3.10+
 
-## 功能特性
+### 安装依赖
 
-- **多语言支持**：支持中文(zh)、英文(en)、日文(ja)，可轻松扩展更多语言
-- 支持OpenAI和DeepSeek双API
-- 自动生成剧情大纲（中间结果）
-- 基于剧情大纲生成完整小说
-- 模块化设计，易于扩展
+> 依赖名称以你脚本里实际 import 为准。下面是常见组合。
 
-## 多语言配置
-
-### 当前支持的语言
-- `zh` - 中文（默认）
-- `en` - English
-- `ja` - 日本語
-
-### 添加新语言
-要添加新语言，只需：
-
-1. 在 `src/prompts/` 下创建新的语言文件夹（例如 `fr/` 用于法语）
-2. 在新文件夹中创建 `prompts.py` 文件，包含：
-   - `NOVEL_GENERATION_PROMPT` - 小说生成提示词
-   - `PLOT_PLANNING_PROMPT` - 剧情大纲提示词
-3. 在 `src/utils/config.py` 的 `SUPPORTED_LANGUAGES` 列表中添加新语言代码
-4. 在 `src/core/novel_generator.py` 的相应映射中添加文件命名规则
-
-### 设置语言
-- **方法1**：在 `.env` 文件中设置 `LANGUAGE=语言代码`（例如 `LANGUAGE=en`）
-- **方法2**：在代码中直接指定：`generator = NovelGenerator(language="en")`
-
-## 注意事项
-
-- 确保已正确配置API密钥
-- 生成小说需要消耗API调用次数，请注意成本
-- 可以根据需要修改对应语言文件夹中的 `prompts.py` 来调整提示词模板
-- 不同语言的输出文件名会自动调整（例如：中文为"小说正文.txt"，英文为"Novel.txt"）
+```bash
+pip install langgraph langchain langchain-openai pydantic python-dotenv
