@@ -1,40 +1,118 @@
-# Novel Workflow (LangGraph) — README
+# Novelist (LangGraph Webnovel Workflow)
 
-这是一个用 **LangGraph + LangChain(OpenAI)** 搭建的“卷级/章级”小说生成原型脚本。  
-当前版本以 **一个 Python 文件**为主（你现在正在运行的那个脚本），支持从设定出发生成：大纲 →（可选）结构 → 章节正文 → 输出到文件。
+A modular LangGraph + LangChain(OpenAI) pipeline for generating webnovels in stages:
+outline → structure → character cards → chapters → output file.
 
-> 目标：快速验证“分阶段生成 + 可迭代”的写作工作流，而不是一次性把整本书塞进 prompt。
+This version supports multi‑language prompts (Chinese/English) and language‑specific formatting.
 
+## Features
 
-## 功能概览
+- **Multi‑stage generation** via LangGraph nodes
+- **Language‑aware prompts** (Chinese/English; extendable)
+- **Language‑aware formatting** for scene blocks, chapter headers, and character summaries
+- **Structured outputs** using Pydantic models
+- **File output** for generated chapters
 
-- 输入一段故事设定（`user_input`），可选输入你自己的大纲（`user_outline`）
-- 通过 LangGraph 串联多个节点（nodes）进行生成
-- 输出：
-  - 结构化大纲对象（OutlineSummary / 或你的对应模型）
-  - 章节正文（chapters 列表）
-  - 落盘文件（例如 `outputs/novel_v3.txt`）
-     ```
+## Project Structure
 
-## 使用方法
-
-1. 在 `input/input.txt` 文件中输入你的小说需求，例如：
-   ```
-   请生成一部科幻小说，主题关于人工智能与人类的未来关系。
-   ```
-
-2. 运行主程序：
-```bash
-python main_0.py
 ```
-## 依赖与环境
+src/
+  main.py                 # Entry point
+  graph_builder.py        # LangGraph wiring
+  llm_config.py           # LLM factory
+  models.py               # Pydantic models + state
+  nodes/
+    outline.py            # Draft outline
+    structure.py          # Plan volume structure
+    characters.py         # Generate characters + render summary
+    writer.py             # Write chapters
+    io.py                 # Save output to file
+  prompts/
+    registry.py           # Routes prompts/formatters by language
+    zh/
+      outline.py
+      structure.py
+      characters.py
+      writer.py
+      formatters.py       # Scene/character/chapter formatting
+    en/
+      outline.py
+      structure.py
+      characters.py
+      writer.py
+      formatters.py
+```
 
-### Python 版本
-建议 Python 3.10+
+## Requirements
 
-### 安装依赖
+- Python 3.10+
+- Packages:
+  ```bash
+  pip install "langchain-openai" "langgraph" "pydantic<3"
+  ```
 
-> 依赖名称以你脚本里实际 import 为准。下面是常见组合。
+## Environment Variables
 
+- `OPENAI_API_KEY` (required)
+- `PROMPT_LANG` (optional, default: `zh`)
+
+Examples:
 ```bash
-pip install langgraph langchain langchain-openai pydantic python-dotenv
+export OPENAI_API_KEY="sk-..."
+export PROMPT_LANG="en"
+```
+
+## Usage
+
+Run the demo script:
+```bash
+python src/main.py
+```
+
+Output goes to:
+```
+output/novel.txt
+```
+
+## Language Support
+
+Prompt/format selection is controlled by `PROMPT_LANG`:
+- `zh` → Chinese prompts + formatting
+- `en` → English prompts + formatting
+
+To add a new language later (e.g., `ja`, `ko`):
+1. Create `src/prompts/ja/` or `src/prompts/ko/`
+2. Add `outline.py`, `structure.py`, `characters.py`, `writer.py`, and `formatters.py`
+3. Update `src/prompts/registry.py` to route the new language
+
+## Notes
+
+- The model is currently set in `src/llm_config.py` (default: `gpt-4o-mini`).
+- The demo `user_input` in `src/main.py` is Chinese by default; you can change it to English.
+
+## Workflow (Exact Graph Order)
+
+This is the precise LangGraph pipeline defined in `src/graph_builder.py`:
+
+**Entry point**
+- `draft_outline`
+
+**Edges (linear chain)**
+- `draft_outline` → `plan_volume_structure`
+- `plan_volume_structure` → `generate_characters`
+- `generate_characters` → `write_chapters`
+- `write_chapters` → `save_output`
+- `save_output` → `END`
+
+**What each node writes into state**
+- `draft_outline`: sets `state["outline"]`
+- `plan_volume_structure`: sets `state["structure"]`
+- `generate_characters`: sets `state["characters"]`
+- `write_chapters`: sets `state["chapters"]`
+- `save_output`: writes file (does not add new fields)
+
+## Roadmap Ideas
+
+- Character subsystem expansion (relationships, skills, classes)
+- Multi‑volume continuity support
+- GraphRAG/encyclopedia layer for long‑running series
