@@ -6,10 +6,11 @@ from src.utils.config import get_language, SUPPORTED_LANGUAGES, DEFAULT_LANGUAGE
 
 
 class Prompts(NamedTuple):
-    """四层提示词结构"""
+    """六层提示词结构"""
     world_building: str
     story_layer: str
-    scene_decomposition: str
+    episode_layer: str
+    beats_layer: str
     textualization: str
 
 
@@ -21,11 +22,12 @@ def load_prompts(language: str = None) -> Prompts:
         language: 语言代码 (zh, en, ja等)，如果为None则使用配置的语言
     
     Returns:
-        Prompts: 包含四层提示词的命名元组
-        - world_building: 设定层提示词
-        - story_layer: 故事层提示词
-        - scene_decomposition: 场景层提示词
-        - textualization: 文字层提示词
+        Prompts: 包含六层提示词的命名元组
+        - world_building: 设定层
+        - story_layer: 故事层
+        - episode_layer: Episode层
+        - beats_layer: Beats层
+        - textualization: 文字层
     
     Raises:
         ValueError: 如果语言不支持或找不到提示词模块
@@ -44,7 +46,8 @@ def load_prompts(language: str = None) -> Prompts:
         return Prompts(
             world_building=prompt_module.WORLD_BUILDING_PROMPT,
             story_layer=prompt_module.STORY_LAYER_PROMPT,
-            scene_decomposition=prompt_module.SCENE_DECOMPOSITION_PROMPT,
+            episode_layer=prompt_module.EPISODE_LAYER_PROMPT,
+            beats_layer=prompt_module.BEATS_LAYER_PROMPT,
             textualization=prompt_module.TEXTUALIZATION_PROMPT
         )
     except ImportError as e:
@@ -55,5 +58,5 @@ def load_prompts(language: str = None) -> Prompts:
     except AttributeError as e:
         raise ValueError(
             f"提示词模块缺少必需的提示词模板: {e}. "
-            f"请确保 src/prompts/{language}/prompts.py 包含所有四层提示词。"
+            f"请确保 src/prompts/{language}/prompts.py 包含所有六层提示词。"
         )

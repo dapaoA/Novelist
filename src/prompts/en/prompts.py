@@ -1,40 +1,25 @@
-"""English prompt templates - Four-Layer Framework"""
+"""English prompt templates - Six-Layer Framework"""
 
-# Layer 1: World Building & Lore
-WORLD_BUILDING_PROMPT = """You are a professional world-building architect. Based on user requirements, construct a complete and consistent world setting foundation.
+# Layer 1: World Building & Lore - must output JSON
+WORLD_BUILDING_PROMPT = """You are a professional world-building architect. **Generate actual world-building content** based on user requirements. **Output pure JSON only** (no ```json markdown).
 
 User requirements:
 {user_input}
 
-Please output the following structured content:
+Output a JSON object. **Each field value must be your actual generated content**, NOT the field descriptions below:
 
-## 1. World Foundation
-- Physical rules (magic, technology level, etc.)
-- Social systems (political structure, organizational systems)
-- Geographic environment (main regions, important locations)
+{{
+  "world_foundation": "Your generated world foundation: physical rules, social systems, geography",
+  "characters": "Your generated character metadata: names, appearance, personality, abilities, background",
+  "race_class_system": "Your generated race/class system (or \"N/A\" if not applicable)",
+  "constraints": "Your generated constraints: rules to follow, forbidden settings, etc."
+}}
 
-## 2. Character Metadata (Core Characters)
-For each main character, provide:
-- Name, age, appearance
-- Core personality traits (3-5 keywords)
-- Core abilities/skills
-- Background (origin, important experiences)
-
-## 3. Race/Class System (if applicable)
-- Racial features and settings
-- Class system and levels
-- Ability system and balance
-
-## 4. Long-term Variables and Constraints
-- Rules the story must follow
-- Settings that are not allowed
-- Elements that need consistency
-
-Please output in a structured and clear format. This will serve as the "foundation" and consistency check reference for all subsequent layers.
+Important: Fill each field with **real creative content** based on user input. Do NOT output placeholder labels like "Physical rules, social systems..." as values.
 """
 
-# Layer 2: Story Layer (Plot & Character Arc)
-STORY_LAYER_PROMPT = """You are a professional plot architect. Based on the constructed world setting, design a complete story skeleton and character arcs.
+# Layer 2: Story Layer - must output JSON
+STORY_LAYER_PROMPT = """You are a professional plot architect. **Output pure JSON only** (no ```json markdown).
 
 World Setting:
 {world_setting}
@@ -42,99 +27,101 @@ World Setting:
 User requirements:
 {user_input}
 
-Please output the following:
+Output a JSON object:
+{{
+  "core_theme": "Core theme, main conflict, tone",
+  "character_arcs": "Character arcs: initial state, growth trajectory, final state",
+  "episodes": [
+    {{"stage": "起", "title": "Stage title (e.g. World intro Ep1-6)", "outline": "Detailed outline"}},
+    {{"stage": "承", "title": "...", "outline": "..."}},
+    {{"stage": "转", "title": "...", "outline": "..."}},
+    {{"stage": "合", "title": "...", "outline": "..."}}
+  ],
+  "foreshadowing": "Foreshadowing and echoes"
+}}
 
-## 1. Core Theme and Main Plot
-- Core theme of the story
-- Main conflict line
-- Basic tone of the story (light/serious/suspenseful, etc.)
-
-## 2. Plot Outline (Plot Points)
-Divide the story into main stages (e.g., opening, development, turning point, climax, conclusion), each stage containing:
-- Main events
-- Key turning points
-- Foreshadowing setup
-- Emotional rhythm
-
-## 3. Character Arcs
-For each main character, design:
-- Initial state (personality, abilities, goals)
-- Growth trajectory (key turning points)
-- Final state (changes after experiencing the story)
-- Behavioral pattern change stages
-
-## 4. Interest and Echo Design
-- Hook points (key scenes that attract readers)
-- Foreshadowing and echo design (list key foreshadowing and their echo positions)
-- Suspense setup
-
-Please ensure character arcs are dynamic, with character behavioral patterns shifting based on experiences at different stages.
+episodes: array in order 起/承/转/合, one element per stage. stage must be one of 起/承/转/合.
 """
 
-# Layer 3: Scene Layer (Scene Decomposition)
-SCENE_DECOMPOSITION_PROMPT = """You are a professional scene decomposition specialist. Break down the story outline into executable specific scene units.
+# Layer 3: Episode Layer - must output JSON
+EPISODE_LAYER_PROMPT = """You are a professional script chapter writer. Expand the **current Episode** using: setting core, core theme & character arcs (from story layer), current story, previous Episode. **Output pure JSON only**.
 
-World Setting:
-{world_setting}
+Setting Core:
+{setting_core}
 
-Story Outline:
+Core Theme (from story layer):
+{core_theme}
+
+Character Arcs (from story layer):
+{character_arcs}
+
+Current Story:
 {story_outline}
 
-Please break down the story into specific scenes, each scene containing:
+Previous Episode (empty if first):
+{previous_episode}
 
-## Scene List (in order)
-For each scene, output:
+Current Episode outline:
+{episode_outline}
 
-### Scene [Number]: [Scene Name]
-- **Location**: Specific place
-- **Characters**: Characters appearing
-- **Goal**: Core objective of the scene (what the character wants to achieve)
-- **Conflict**: Conflict/contradiction in the scene
-- **Emotional Tone**: Atmosphere of the scene
-- **Connection to Previous/Next Scenes**: How it connects
-- **Key Dialogue/Actions**: Elements that must appear
-- **Foreshadowing/Echo**: Foreshadowing or echoes involved in this scene
-
-Please ensure each scene is an independent minimum narrative unit, supporting local modification without affecting the overall framework.
-Scene breakdown should be detailed. For example, "entering the city" can be broken into "arriving at city gate" -> "undergoing inspection" -> "entering the city" and other scenes.
+Expand into 500-800 word summary. Output:
+{{
+  "title": "Episode title",
+  "summary": "Full 500-800 word detailed summary"
+}}
 """
 
-# Layer 4: Textualization Layer
-TEXTUALIZATION_PROMPT = """You are an accomplished novelist with exquisite prose. Based on all preceding layer information, render the scene into beautiful literary text.
+# Layer 4: Beats Layer - split Episode layer output into multiple beats, tell full episode story
+BEATS_LAYER_PROMPT = """You are a professional script breakdown specialist. Your task: Split the **Episode layer's detailed summary** into multiple Beats. Each Beat tells one part concisely; together they tell the full episode story. Number of Beats is unlimited until the episode is fully covered.
 
-World Setting:
-{world_setting}
+Setting Core:
+{setting_core}
 
-Story Context:
-{story_context}
+Current Episode (Episode layer's detailed summary - split this into Beats):
+{episode_context}
 
-Current Scene Description:
-{scene_description}
+Previous Beat (the **last** of the Beats already generated for this episode; empty if first):
+{previous_beat}
 
-Character History/Status:
-{character_context}
+Output the **next Beat** as a single JSON object:
 
-Please render the above scene as novel text, requirements:
+```json
+{{
+  "scene": "EXT./INT. Location - Time",
+  "environment": "Environment description",
+  "action": "Character actions and reactions",
+  "dialogue": [{{"Character": "(action/emotion): \\"Dialogue\\""}}],
+  "purpose": "Narrative purpose"
+}}
+```
 
-1. **Prose Requirements**
-   - Smooth and elegant language, matching the emotional tone of the scene
-   - Natural and vivid dialogue, matching character personality
-   - Detailed environmental description, creating atmosphere
+Requirements:
+1. If previous_beat is empty, this is the first beat - open the Episode
+2. Continue naturally from the previous beat, maintain narrative flow
+3. When the episode is fully covered, set scene to "[EPISODE_END]" to signal completion
+4. Output only one JSON object, no other text
+"""
 
-2. **Consistency Check**
-   - Strictly follow the rules of world setting
-   - Character behavior matches their current stage character arc
-   - Maintain coherence with previous scenes
+# Layer 5: Textualization - uses only: previous_text + current_beat + story_core + setting_core
+TEXTUALIZATION_PROMPT = """You are an accomplished novelist. Render the Beat into novel text using only: **previous text**, **current Beat**, **story core**, and **setting core**.
 
-3. **Detail Requirements**
-   - Pay attention to subtle character expressions and actions
-   - Show character psychology through details
-   - Use five-sense descriptions to enhance immersion
+Setting Core:
+{setting_core}
 
-4. **Structure Requirements**
-   - Scene opening should have clear scene sense
-   - Scene ending should have appropriate transition or suspense
-   - Word count approximately 800-1500 words (adjust based on scene complexity)
+Story Core:
+{story_core}
 
-Please directly output the complete text content of the scene without any additional explanations or comments.
+Current Beat (script format):
+{beat_content}
+
+Previous Text (empty if first beat):
+{previous_text}
+
+Render the current Beat as novel text. Requirements:
+
+1. **Prose**: Smooth language, expand environment/action/dialogue into rich narrative
+2. **Coherence**: Natural transition from previous text (if any), achieve Beat's purpose, follow setting and story core
+3. **Length**: ~200-500 words, clear scene opening, natural transition at end
+
+Output only the complete text content, no extra explanation.
 """
