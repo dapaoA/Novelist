@@ -87,6 +87,49 @@ python src/main.py
 - **多语言支持**：中文(zh)、英文(en)、日文(ja)，可扩展
 - 支持 OpenAI 和 DeepSeek 双 API
 
+## Character Module
+
+项目现在额外提供了一个独立的角色域模块，位于 `src/characters/`。这个模块目前不接入 `NovelGenerator` 主流程，目的是先把角色建模、校验和存储边界固定下来，后续再按需要接入关系、记忆或别的检索方案。
+
+目录结构：
+
+```text
+src/characters/
+├── __init__.py
+├── interfaces.py       # 协议定义：CharacterStore, CharacterExtractor
+├── models.py           # Character, CharacterCandidate 和规范化工具
+├── service.py          # 角色创建、更新、查找、合并逻辑
+└── stores/
+    ├── __init__.py
+    └── in_memory.py    # 内存版存储，适合本地开发和测试
+```
+
+设计原则：
+
+- `models.py` 只定义数据结构
+- `interfaces.py` 只定义模块之间的契约
+- `service.py` 负责业务规则，不关心底层存储细节
+- `stores/` 可以按需替换成 SQLite、Postgres 或别的实现
+
+最小用法：
+
+```python
+from src.characters.service import CharacterService
+from src.characters.stores import InMemoryCharacterStore
+
+store = InMemoryCharacterStore()
+service = CharacterService(store)
+
+alice = service.create_character(
+    canonical_name="Alice",
+    aliases=["Al"],
+    traits=["curious", "stubborn"],
+    role="protagonist",
+)
+
+same_character = service.find_character("Al")
+```
+
 ## 多语言配置
 
 ### 当前支持的语言
