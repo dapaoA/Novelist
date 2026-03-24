@@ -9,6 +9,8 @@ load_dotenv()
 # 支持的语言列表
 SUPPORTED_LANGUAGES = ["zh", "en", "ja"]
 DEFAULT_LANGUAGE = "zh"
+SUPPORTED_GENERATION_MODES = ["sandbox", "observer"]
+DEFAULT_GENERATION_MODE = "sandbox"
 
 
 def get_language() -> str:
@@ -18,6 +20,22 @@ def get_language() -> str:
         print(f"警告: 不支持的语言 '{language}'，使用默认语言 '{DEFAULT_LANGUAGE}'")
         language = DEFAULT_LANGUAGE
     return language
+
+
+def get_generation_mode() -> str:
+    """获取当前生成模式。
+
+    `observer` 保留为旧别名，统一映射到 `sandbox`。
+    """
+    mode = os.getenv("NOVELIST_MODE", DEFAULT_GENERATION_MODE).lower()
+    if mode not in SUPPORTED_GENERATION_MODES:
+        print(
+            f"警告: 不支持的生成模式 '{mode}'，使用默认模式 '{DEFAULT_GENERATION_MODE}'"
+        )
+        mode = DEFAULT_GENERATION_MODE
+    if mode == "observer":
+        return "sandbox"
+    return mode
 
 
 def get_api_key() -> str:

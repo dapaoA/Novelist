@@ -1,4 +1,4 @@
-"""小说生成核心模块 - 六层架构
+"""小说生成核心模块 - 六层架构（当前为 Sandbox Mode）
 
 流程：自上而下、自左而右
 1. 故事层：生成整体故事（含Episode梗概）
@@ -22,13 +22,23 @@ from typing import List, Dict, Optional, Any
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
-from src.utils.config import get_api_key, get_api_base_url, get_model_name, get_language
+from src.utils.config import (
+    get_api_base_url,
+    get_api_key,
+    get_generation_mode,
+    get_language,
+    get_model_name,
+)
 from src.utils.file_utils import read_input_file, save_output_file, save_intermediate_file
 from src.prompts.prompt_loader import load_prompts
 
 
 class NovelGenerator:
-    """六层架构小说生成器"""
+    """六层架构小说生成器。
+
+    当前实现定位为 Sandbox Mode：给定设定和需求后，由系统自主推进
+    故事；它强调内部连贯性，但不承担作者主导式的长期叙事控制。
+    """
 
     def __init__(self, language: str = None):
         """
@@ -49,8 +59,10 @@ class NovelGenerator:
         )
 
         self.language = language if language else get_language()
+        self.generation_mode = get_generation_mode()
         self.prompts = load_prompts(self.language)
         print(f"已加载语言: {self.language}")
+        print(f"已加载模式: {self.generation_mode}")
 
         # 存储各层生成的数据
         self.world_setting: Optional[str] = None
